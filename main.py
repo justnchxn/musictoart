@@ -84,3 +84,4 @@ create_chart(tab2, audio_features_medium, top_tracks_medium, "medium term")
 create_chart(tab3, audio_features_long, top_tracks_long, "long term")
 
 st.write(f"Token: {sp.auth_manager.get_access_token()}")
+sp.auth_manager.refresh_access_token(sp.auth_manager.cache_handler.get_cached_token()['refresh_token'])

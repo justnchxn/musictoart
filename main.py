@@ -6,7 +6,7 @@ import os
 
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
-redirect_url = "http://localhost:5000"
+redirect_url = "https://localhost:5000"
 
 sp = spotipy.Spotify(
     auth_manager=SpotifyOAuth(
@@ -33,3 +33,10 @@ audio_features_short = sp.audio_features(track_ids_short)
 audio_features_medium = sp.audio_features(track_ids_medium)
 audio_features_long = sp.audio_features(track_ids_long)
 
+df = pd.DataFrame(audio_features_short)
+df["track_name"] = [track["name"] for track in top_tracks_short["items"]]
+df = df[["track_name", "danceability", "energy", "valence"]]
+df.set_index("track_name", implace=True)
+
+st.subheader("Audio Feature for Top Tracks")
+st.bar_chart(df, height=500)

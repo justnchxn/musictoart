@@ -24,3 +24,12 @@ st.write("Converts Your Music Tastes Into Art")
 top_tracks_short = sp.current_user_top_tracks(limit=10, time_range="short_term")
 top_tracks_medium = sp.current_user_top_tracks(limit=10, time_range="medium_term")
 top_tracks_long = sp.current_user_top_tracks(limit=10, time_range="long_term")
+
+track_ids_short = [track["id"] for track in top_tracks_short["items"]]
+track_ids_medium = [track["id"] for track in top_tracks_medium["items"]]
+track_ids_long = [track["id"] for track in top_tracks_long["items"]]
+
+audio_features_short = sp.audio_features(track_ids_short)
+audio_features_medium = sp.audio_features(track_ids_medium)
+audio_features_long = sp.audio_features(track_ids_long)
+

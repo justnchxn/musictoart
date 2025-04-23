@@ -2,9 +2,17 @@ import spotipy
 from spotipy.oauth2 import SpotifyOAuth
 import streamlit as st
 import pandas as pd
+from dotenv import load_dotenv
 import os
+import time
+import logging
 
-# Load credentials from environment
+# Set up logging
+logging.basicConfig(level=logging.DEBUG)
+
+# Load environment variables
+load_dotenv()
+
 client_id = os.getenv("CLIENT_ID")
 client_secret = os.getenv("CLIENT_SECRET")
 redirect_uri = "http://127.0.0.1:8888/callback"
@@ -20,7 +28,8 @@ sp = spotipy.Spotify(
         client_id=client_id,
         client_secret=client_secret,
         redirect_uri=redirect_uri,
-        scope=["user-top-read", "user-library-read", "playlist-read-private", "playlist-read-collaborative"],
+        scope="user-top-read",
+        # scope=["user-top-read", "user-library-read", "playlist-read-private", "playlist-read-collaborative"],
         show_dialog=True,
         cache_path=".cache"
     )
@@ -44,6 +53,11 @@ top_tracks_short = sp.current_user_top_tracks(limit=10, time_range="short_term")
 top_tracks_medium = sp.current_user_top_tracks(limit=10, time_range="medium_term")
 top_tracks_long = sp.current_user_top_tracks(limit=10, time_range="long_term")
 
+# Display tracks for debugging
+st.write(f"Top Short-Term Tracks: {top_tracks_short}")
+st.write(f"Top Medium-Term Tracks: {top_tracks_medium}")
+st.write(f"Top Long-Term Tracks: {top_tracks_long}")
+
 # Extract valid track IDs
 def extract_ids(tracks):
     return [track["id"] for track in tracks["items"] if track["id"]]
@@ -52,10 +66,39 @@ track_ids_short = extract_ids(top_tracks_short)
 track_ids_medium = extract_ids(top_tracks_medium)
 track_ids_long = extract_ids(top_tracks_long)
 
+# Log track IDs for debugging
+st.write(f"Track IDs (short term): {track_ids_short}")
+st.write(f"Track IDs (medium term): {track_ids_medium}")
+st.write(f"Track IDs (long term): {track_ids_long}")
+
+# Handle no tracks found scenario
+if not track_ids_short or not track_ids_medium or not track_ids_long:
+    st.warning("No top tracks found for the user.")
+    st.stop()
+
+# Check availability of tracks by fetching each one manually
+def check_track_availability(track_ids):
+    available_tracks = []
+    for track_id in track_ids:
+        try:
+            track_info = sp.track(track_id)
+            available_tracks.append(track_info)
+            logging.info(f"Track found: {track_info['name']}")
+        except Exception as e:
+            logging.error(f"Error fetching track info for {track_id}: {e}")
+    return available_tracks
+
+available_tracks_short = check_track_availability(track_ids_short)
+available_tracks_medium = check_track_availability(track_ids_medium)
+available_tracks_long = check_track_availability(track_ids_long)
+
 # Safe wrapper for audio features
 def safe_audio_features(sp, ids, label=""):
     try:
-        return sp.audio_features(ids)
+        logging.info(f"Fetching audio features for {label} tracks: {ids}")
+        response = sp.audio_features(ids)
+        logging.debug(f"API Response: {response}")
+        return response
     except spotipy.exceptions.SpotifyException as e:
         st.error(f"Spotify API error for {label} tracks: {e}")
         return []
@@ -82,6 +125,3 @@ def create_chart(tab, features, tracks, label):
 create_chart(tab1, audio_features_short, top_tracks_short, "short term")
 create_chart(tab2, audio_features_medium, top_tracks_medium, "medium term")
 create_chart(tab3, audio_features_long, top_tracks_long, "long term")
-
-st.write(f"Token: {sp.auth_manager.get_access_token()}")
-sp.auth_manager.refresh_access_token(sp.auth_manager.cache_handler.get_cached_token()['refresh_token'])

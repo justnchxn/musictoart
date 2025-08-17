@@ -6,7 +6,7 @@ THEMES = [
     "oil painting",
     "watercolor",
     "neon cyberpunk",
-    "ghibli",
+    "anime",
     "vaporwave",
     "pixel art",
     "low-poly 3d",

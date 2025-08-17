@@ -9,11 +9,7 @@ from .spotify import get_tokens
 from .generate import router as gen_router
 from .config import STABILITY_API_KEY, STABILITY_MODEL
 
-from starlette.middleware.proxy_headers import ProxyHeadersMiddleware
-
 app = FastAPI()
-app.add_middleware(ProxyHeadersMiddleware)
-
 # Routers
 app.include_router(auth_router)
 app.include_router(gen_router)

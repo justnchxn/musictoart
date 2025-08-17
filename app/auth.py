@@ -9,7 +9,10 @@ from fastapi.responses import RedirectResponse
 import httpx
 
 from .config import SPOTIFY_CLIENT_ID, SPOTIFY_REDIRECT_URI, SESSION_SECRET, ALLOWED_SCOPES
+from itsdangerous import URLSafeSerializer, BadSignature
+from .config import SESSION_SECRET
 
+signer = URLSafeSerializer(SESSION_SECRET, salt="spotify-session")
 router = APIRouter()
 
 
@@ -82,6 +85,25 @@ async def callback(request: Request, code: str = "", error: str = ""):
             raise HTTPException(status_code=400, detail=f"Spotify token exchange failed: {resp.text}")
 
         token_data = resp.json()
+        import time
+        expires_at = int(time.time()) + int(token_data.get("expires_in", 3600))
 
-    # You can store tokens in session / db here
+        session_payload = {
+            "access_token": token_data["access_token"],
+            "refresh_token": token_data.get("refresh_token"),
+            "expires_at": expires_at,
+            "scope": token_data.get("scope", ""),
+            "token_type": token_data.get("token_type", "Bearer"),
+        }
+
+        cookie_val = signer.dumps(session_payload)
+
+        redir = RedirectResponse("/", status_code=302)
+        redir.set_cookie(
+            "session", cookie_val,
+            httponly=True, samesite="lax", secure=False, 
+            max_age=60*60*24*7, path="/"
+        )
+        return redir
+        
     return token_data

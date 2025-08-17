@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block content %}
+  <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+    {% if authed %}
+      <label for="themeSel" style="font-weight:600">Theme:</label>
+      <select id="themeSel" style="padding:6px 10px; border-radius:8px">
+        <option>oil painting</option>
+        <option>watercolor</option>
+        <option>neon cyberpunk</option>
+        <option>ghibli</option>
+        <option>vaporwave</option>
+        <option>pixel art</option>
+        <option>low-poly 3d</option>
+        <option>origami paper</option>
+        <option>charcoal sketch</option>
+        <option>ink wash</option>
+        <option>stained glass</option>
+        <option>clay stop-motion</option>
+        <option>ukiyo-e</option>
+        <option>synthwave</option>
+        <option>bauhaus minimal</option>
+        <option>steampunk</option>
+      </select>
+      <button id="gen" type="button">Generate Image</button>
+      <span id="status" style="min-width:220px"></span>
+    {% else %}
+      <a class="btn" href="/login">Connect Spotify</a>
+    {% endif %}
+  </div>
+
+  <img id="out" alt="Generated" style="margin-top:12px; max-width:100%; display:none; border-radius:12px" />
+
+  <script>
+    const statusEl = document.getElementById('status');
+    async function generateImage() {
+      const theme = document.getElementById('themeSel').value;
+      statusEl.textContent = 'Generating…';
+      const r = await fetch('/api/generate?theme=' + encodeURIComponent(theme));
+      const out = document.getElementById('out');
+      if (!r.ok) {
+        statusEl.textContent = 'Generation failed (connect Spotify & set STABILITY_API_KEY).';
+        out.style.display = 'none';
+        return;
+      }
+      const d = await r.json();
+      out.src = d.image_url;
+      out.style.display = 'block';
+      statusEl.textContent = 'Done';
+    }
+    const btn = document.getElementById('gen');
+    if (btn) btn.addEventListener('click', generateImage);
+  </script>
+{% endblock %}

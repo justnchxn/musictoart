@@ -1,4 +1,3 @@
-# app/generate.py
 import base64, uuid, os, httpx
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import JSONResponse
@@ -17,23 +16,19 @@ async def generate_image(request: Request, theme: str = Query(default="oil paint
                 status_code=500,
             )
 
-        # 1) Get user's top artists/tracks
         data = await fetch_top(request)
         if not data:
             return JSONResponse({"error": "not_authed"}, status_code=401)
 
-        # 2) Build taste + three words
         taste = build_taste_vector(data["artists"], data["tracks"])
         theme = normalize_theme(theme)
         g, p, e = three_words(taste)
 
-        # 3) Build the prompt (now actually defined!)
         prompt = (
             f"{g} {p} {e}, {theme}, abstract digital art, high detail, "
             f"volumetric lighting, vector shapes, generative aesthetic, 4k"
         )
 
-        # 4) Call Stability
         url = f"https://api.stability.ai/v1/generation/{STABILITY_MODEL}/text-to-image"
         headers = {
             "Authorization": f"Bearer {STABILITY_API_KEY}",
@@ -52,7 +47,6 @@ async def generate_image(request: Request, theme: str = Query(default="oil paint
         async with httpx.AsyncClient(timeout=60) as client:
             r = await client.post(url, headers=headers, json=payload)
 
-        # Debug logging (shows in your terminal)
         print("STABILITY status:", r.status_code)
         print("STABILITY body:", r.text[:400])
 
@@ -65,7 +59,6 @@ async def generate_image(request: Request, theme: str = Query(default="oil paint
         out = r.json()
         b64 = out["artifacts"][0]["base64"]
 
-        # 5) Save image to /static/generated
         os.makedirs("app/static/generated", exist_ok=True)
         art_id = str(uuid.uuid4())
         img_path = f"app/static/generated/{art_id}.png"

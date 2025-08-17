@@ -1,4 +1,3 @@
-# app/auth.py
 import base64
 import hashlib
 import os
@@ -16,7 +15,6 @@ signer = URLSafeSerializer(SESSION_SECRET, salt="spotify-session")
 router = APIRouter()
 
 
-# ---- PKCE helper ----
 def _pkce_pair():
     verifier = base64.urlsafe_b64encode(os.urandom(64)).rstrip(b"=").decode("utf-8")
     challenge = (
@@ -26,8 +24,6 @@ def _pkce_pair():
     )
     return verifier, challenge
 
-
-# ---- Login endpoint ----
 @router.get("/login")
 async def login(request: Request):
     verifier, challenge = _pkce_pair()
@@ -47,24 +43,20 @@ async def login(request: Request):
 
     resp = RedirectResponse(auth_url, status_code=302)
 
-    # 👇 ADD THIS HERE
     import os
-    is_prod = os.getenv("RENDER") is not None  # Render sets this in production
+    is_prod = os.getenv("RENDER") is not None 
     resp.set_cookie(
         "pkce_verifier",
         verifier,
         httponly=True,
         samesite="lax",
-        secure=is_prod,  # True on Render, False locally
+        secure=is_prod, 
         max_age=600,
         path="/",
     )
 
     return resp
 
-
-
-# ---- Callback endpoint ----
 @router.get("/callback")
 async def callback(request: Request, code: str = "", error: str = ""):
     if error:

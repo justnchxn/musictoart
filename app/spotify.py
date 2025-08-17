@@ -4,7 +4,7 @@ from fastapi import Request
 from itsdangerous import BadSignature
 
 from .auth import signer
-from .config import SPOTIFY_CLIENT_ID  # useful if you later add refresh
+from .config import SPOTIFY_CLIENT_ID 
 
 API_BASE = "https://api.spotify.com/v1"
 
@@ -18,7 +18,6 @@ def get_tokens(request: Request):
     except BadSignature:
         return None
 
-    # simple expiry check (no auto-refresh in this minimal version)
     if data.get("expires_at") and int(time.time()) >= int(data["expires_at"]):
         return None
     return data
@@ -35,7 +34,6 @@ async def fetch_top(request: Request):
         t = await client.get(f"{API_BASE}/me/top/tracks?limit=20", headers=headers)
 
     if a.status_code != 200 or t.status_code != 200:
-        # Token might be expired or scopes missing
         return None
 
     return {"artists": a.json().get("items", []), "tracks": t.json().get("items", [])}

@@ -2,7 +2,6 @@ from collections import Counter
 import hashlib, math, random
 from typing import Dict, Any, List, Tuple
 
-# --- Themes (10–20 curated) ---
 THEMES = [
     "oil painting",
     "watercolor",
@@ -28,7 +27,6 @@ def normalize_theme(name: str) -> str:
         return "oil painting"
     return _theme_aliases.get(name.strip().lower(), "oil painting")
 
-# --- Taste vector builders ---
 GenreBuckets = {
   "dream pop": "dream-pop",
   "shoegaze": "dream-pop",
@@ -70,14 +68,11 @@ def entropy(counts: List[int]) -> float:
     return min(1.0, H/5)
 
 def build_taste_vector(artists: List[Dict[str,Any]], tracks: List[Dict[str,Any]]):
-    # genres
     all_genres = []
     for a in artists:
         all_genres.extend(a.get("genres", []))
     binned = bucket_genres(all_genres)
     genre_counts = Counter(binned)
-
-    # popularity
     pops = []
     for a in artists:
         if isinstance(a.get("popularity"), int):
@@ -87,7 +82,6 @@ def build_taste_vector(artists: List[Dict[str,Any]], tracks: List[Dict[str,Any]]
             pops.append(t["popularity"])
     popularity_avg = sum(pops)/len(pops) if pops else 50
 
-    # eras / explicit / duration
     eras = Counter(); explicit = 0; durs = []
     for t in tracks:
         if t.get("explicit"): explicit += 1
@@ -107,8 +101,6 @@ def build_taste_vector(artists: List[Dict[str,Any]], tracks: List[Dict[str,Any]]
         "durationsMs": {"mean": dur_mean, "std": dur_std},
         "eras": dict(eras),
     }
-
-# --- Three-word selector (genre, popularity word, era) for prompt building ---
 
 def _weighted_choice(counts: Dict[str, int]) -> str:
     items = list(counts.items())
@@ -132,8 +124,6 @@ def three_words(taste: Dict[str, Any]) -> Tuple[str, str, str]:
     era = _weighted_choice(eras) if eras else "2000s"
     pop = popularity_word(float(taste.get("popularityAvg", 50)))
     return genre, pop, era
-
-# --- Map taste to visual params for canvas ---
 
 def pick_palette(top_genre: str, era: str|None) -> list:
     return PALETTES.get(top_genre, PALETTES["default"])

@@ -1,4 +1,3 @@
-# app/main.py
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -10,6 +9,7 @@ from .generate import router as gen_router
 from .config import STABILITY_API_KEY, STABILITY_MODEL
 
 app = FastAPI()
+
 # Routers
 app.include_router(auth_router)
 app.include_router(gen_router)
@@ -24,7 +24,6 @@ def index(request: Request):
     authed = bool(get_tokens(request))
     return templates.TemplateResponse("index.html", {"request": request, "authed": authed})
 
-# Optional: quick health check
 @app.get("/health")
 def health():
     return {

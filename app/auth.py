@@ -32,7 +32,6 @@ def _pkce_pair():
 async def login(request: Request):
     verifier, challenge = _pkce_pair()
 
-    # prefer env var; otherwise compute from current host
     redirect_uri = SPOTIFY_REDIRECT_URI or str(request.url_for("callback"))
     print("DEBUG redirect_uri being used:", redirect_uri)
 
@@ -47,15 +46,22 @@ async def login(request: Request):
     auth_url = "https://accounts.spotify.com/authorize?" + urlencode(params)
 
     resp = RedirectResponse(auth_url, status_code=302)
+
+    # 👇 ADD THIS HERE
+    import os
+    is_prod = os.getenv("RENDER") is not None  # Render sets this in production
     resp.set_cookie(
         "pkce_verifier",
         verifier,
         httponly=True,
         samesite="lax",
+        secure=is_prod,  # True on Render, False locally
         max_age=600,
         path="/",
     )
+
     return resp
+
 
 
 # ---- Callback endpoint ----

@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(PROJECT_ROOT / ".env", override=True)
 
 SPOTIFY_CLIENT_ID    = os.getenv("SPOTIFY_CLIENT_ID", "")
-SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI", "http://localhost:8000/callback")
+SPOTIFY_REDIRECT_URI = os.getenv("SPOTIFY_REDIRECT_URI")
 SESSION_SECRET       = os.getenv("SESSION_SECRET", "dev-secret")
 
 # bring this back:
